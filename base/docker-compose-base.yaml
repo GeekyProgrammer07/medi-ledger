@@ -1,0 +1,78 @@
+version: '2'
+
+services:
+
+  orderer.pharma-network.com:
+    container_name: orderer.pharma-network.com
+    image: hyperledger/fabric-orderer
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/opt/gopath/fabric-samples/pharma-network/channel-artifacts/genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=AdminMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=/var/hyperledger/orderer/tls/ca.crt
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ../channel-artifacts/genesis.block:/opt/gopath/fabric-samples/pharma-network/channel-artifacts/genesis.block
+      - ../crypto-config/ordererOrganizations/pharma-network.com/orderers/orderer.pharma-network.com/msp:/var/hyperledger/orderer/msp
+      - ../crypto-config/ordererOrganizations/pharma-network.com/orderers/orderer.pharma-network.com/tls/:/var/hyperledger/orderer/tls
+      - orderer.pharma-network.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+
+  peer0.manufacturer.pharma-network.com:
+    container_name: peer0.manufacturer.pharma-network.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.manufacturer.pharma-network.com
+      - CORE_PEER_ADDRESS=peer0.manufacturer.pharma-network.com:7051
+      - CORE_PEER_LOCALMSPID=ManufacturerMSP
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../crypto-config/peerOrganizations/manufacturer.pharma-network.com/peers/peer0.manufacturer.pharma-network.com/msp:/etc/hyperledger/fabric/msp
+      - ../crypto-config/peerOrganizations/manufacturer.pharma-network.com/peers/peer0.manufacturer.pharma-network.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.manufacturer.pharma-network.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+
+  peer0.distributer.pharma-network.com:
+    container_name: peer0.distributer.pharma-network.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.distributer.pharma-network.com
+      - CORE_PEER_ADDRESS=peer0.distributer.pharma-network.com:9051
+      - CORE_PEER_LOCALMSPID=DistributerMSP
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../crypto-config/peerOrganizations/distributer.pharma-network.com/peers/peer0.distributer.pharma-network.com/msp:/etc/hyperledger/fabric/msp
+      - ../crypto-config/peerOrganizations/distributer.pharma-network.com/peers/peer0.distributer.pharma-network.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.distributer.pharma-network.com:/var/hyperledger/production
+    ports:
+      - 9051:7051
+
+  peer0.pharmacy.pharma-network.com:
+    container_name: peer0.pharmacy.pharma-network.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base                                                                                                                                                                                                                                                                                                                                                                          
+    environment:
+      - CORE_PEER_ID=peer0.pharmacy.pharma-network.com
+      - CORE_PEER_ADDRESS=peer0.pharmacy.pharma-network.com:10051
+      - CORE_PEER_LOCALMSPID=PharmacyMSP
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../crypto-config/peerOrganizations/pharmacy.pharma-network.com/peers/peer0.pharmacy.pharma-network.com/msp:/etc/hyperledger/fabric/msp
+      - ../crypto-config/peerOrganizations/pharmacy.pharma-network.com/peers/peer0.pharmacy.pharma-network.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.pharmacy.pharma-network.com:/var/hyperledger/production
+    ports:
+      - 10051:7051
