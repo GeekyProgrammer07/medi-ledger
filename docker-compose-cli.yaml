@@ -1,0 +1,76 @@
+version: '2'
+
+volumes:
+  orderer.pharma-network.com:
+  peer0.manufacturer.pharma-network.com:
+  peer0.distributer.pharma-network.com:
+  peer0.pharmacy.pharma-network.com:
+
+networks:
+  supplychain-network:
+
+services:
+
+  orderer.pharma-network.com:
+    extends:
+      file: base/docker-compose-base.yaml
+      service: orderer.pharma-network.com
+    container_name: orderer.pharma-network.com
+    networks:
+      - supplychain-network
+
+  peer0.manufacturer.pharma-network.com:
+    container_name: peer0.manufacturer.pharma-network.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.manufacturer.pharma-network.com
+    networks:
+      - supplychain-network
+
+  peer0.distributer.pharma-network.com:
+    container_name: peer0.distributer.pharma-network.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.distributer.pharma-network.com
+    networks:
+      - supplychain-network
+
+  peer0.pharmacy.pharma-network.com:
+    container_name: peer0.pharmacy.pharma-network.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.pharmacy.pharma-network.com
+    networks:
+      - supplychain-network
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    stdin_open: true
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.manufacturer.pharma-network.com:7051
+      - CORE_PEER_LOCALMSPID=ManufacturerMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/fabric-samples/supplychain-network/crypto-config/peerOrganizations/manufacturer.pharma-network.com/peers/peer0.manufacturer.pharma-network.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/fabric-samples/supplychain-network/crypto-config/peerOrganizations/manufacturer.pharma-network.com/peers/peer0.manufacturer.pharma-network.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/fabric-samples/supplychain-network/crypto-config/peerOrganizations/manufacturer.pharma-network.com/peers/peer0.manufacturer.pharma-network.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/fabric-samples/supplychain-network/crypto-config/peerOrganizations/manufacturer.pharma-network.com/users/Admin@manufacturer.pharma-network.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./../chaincode/:/opt/gopath/src/chaincode
+      - ./crypto-config:/opt/gopath/fabric-samples/supplychain-network/crypto-config/
+      - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+      - ./channel-artifacts:/opt/gopath/fabric-samples/supplychain-network/channel-artifacts
+    depends_on:
+      - orderer.pharma-network.com
+      - peer0.manufacturer.pharma-network.com
+      - peer0.distributer.pharma-network.com
+      - peer0.pharmacy.pharma-network.com
+    networks:
+      - supplychain-network

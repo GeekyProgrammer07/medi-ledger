@@ -1,0 +1,291 @@
+################################################################################
+#
+#   ORGANIZATIONS
+#
+################################################################################
+Organizations:
+# - &SampleOrg
+#   Name: SampleOrg
+#   SkipAsForeign: false
+#   ID: SampleOrg
+#   MSPDir: msp
+#   Policies: &SampleOrgPolicies
+#     Readers:
+#       Type: Signature
+#       Rule: "OR('SampleOrg.admin', 'SampleOrg.peer', 'SampleOrg.client')"    
+#     Writers:
+#       Type: Signature
+#       Rule: "OR('SampleOrg.admin', 'SampleOrg.client')"
+#     Admins:
+#       Type: Signature
+#       Rule: "OR('SampleOrg.admin')"
+#     Endorsement:
+#       Type: Signature
+#       Rule: "OR('SampleOrg.peer')"
+
+  - &ManufacturerOrg
+    Name: ManufacturerOrg
+    ID: ManufacturerMSP
+    MSPDir: ./crypto-config/peerOrganizations/manufacturer.pharma-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.admin', 'ManufacturerMSP.peer', 'ManufacturerMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.admin', 'ManufacturerMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.manufacturer.pharma-network.com
+        Port: 7051
+
+  - &DistributerOrg
+    Name: DistributerOrg
+    ID: DistributerMSP
+    MSPDir: ./crypto-config/peerOrganizations/distributer.pharma-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('DistributerMSP.admin', 'DistributerMSP.peer', 'DistributerMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('DistributerMSP.admin', 'DistributerMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('DistributerMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('DistributerMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.distributer.pharma-network.com
+        Port: 7051
+
+  - &PharmacyOrg
+    Name: PharmacyOrg
+    ID: PharmacyMSP
+    MSPDir: ./crypto-config/peerOrganizations/pharmacy.pharma-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.admin', 'PharmacyMSP.peer', 'PharmacyMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.admin')"
+      Admins:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.pharmacy.pharma-network.com
+        Port: 7051
+
+  - &AdminOrg
+    Name: AdminOrg
+    ID: AdminMSP
+    MSPDir: ./crypto-config/ordererOrganizations/pharma-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('AdminMSP.admin', 'AdminMSP.peer', 'AdminMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('AdminMSP.admin')"  
+      Admins:
+        Type: Signature
+        Rule: "OR('AdminMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('AdminMSP.admin')"
+    OrdererEndpoints:
+      - "127.0.0.1:7050"
+
+
+################################################################################
+#
+#   CAPABILITIES
+#
+################################################################################   
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true  
+  Orderer: &OrdererCapabilities
+    V2_0: true  
+  Application: &ApplicationCapabilities
+    V2_5: true  
+
+################################################################################
+#
+#   APPLICATION
+#
+################################################################################
+# Access Control Lists
+Application: &ApplicationDefaults
+    ACLs: &ACLsDefault
+        # New Lifecycle System Chaincode (_lifecycle)
+        _lifecycle/CheckCommitReadiness: /Channel/Application/Admins
+        _lifecycle/CommitChaincodeDefinition: /Channel/Application/Admins
+        _lifecycle/QueryChaincodeDefinition: /Channel/Application/Writers
+        _lifecycle/QueryChaincodeDefinitions: /Channel/Application/Readers
+
+        #Lifecycle System Chaincode (lscc)
+        lscc/ChaincodeExists: /Channel/Application/Readers
+        lscc/GetDeploymentSpec: /Channel/Application/Admins
+        lscc/GetChaincodeData: /Channel/Application/Readers
+        lscc/GetInstantiatedChaincodes: /Channel/Application/Readers
+
+        # Query System Chaincode (qscc) 
+        qscc/GetChainInfo: /Channel/Application/Readers
+        qscc/GetBlockByNumber: /Channel/Application/Readers
+        qscc/GetBlockByHash: /Channel/Application/Readers
+        qscc/GetTransactionByID: /Channel/Application/Readers
+        qscc/GetBlockByTxID: /Channel/Application/Readers
+
+        # Configuration System Chaincode (cscc)
+        cscc/GetConfigBlock: /Channel/Application/Admins
+        cscc/GetChannelConfig: /Channel/Application/Admins
+
+        # Miscellaneous Peer Function
+        peer/Propose: /Channel/Application/Writers
+        peer/ChaincodeToChaincode: /Channel/Application/Writers
+
+        # Events Resource
+        event/Block: /Channel/Application/Readers
+        event/FilteredBlock: /Channel/Application/Readers
+
+    Organizations:
+      - *ManufacturerOrg
+      - *DistributerOrg
+      - *PharmacyOrg
+
+    
+    Policies: &ApplicationDefaultPolicies
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+################################################################################
+#
+#   ORDERER
+#
+################################################################################
+Orderer: &OrdererDefaults
+
+  OrdererType: etcdraft  
+  # Raft (etcdraft) is used for production-ready consensus, supporting crash fault tolerance and multiple orderers
+
+  Addresses:
+    - 127.0.0.1:7050
+    # List of orderer node addresses that clients, peers use to communicate
+
+  EtcdRaft:
+    Consenters:
+      - Host: 127.0.0.1
+        Port: 7050
+        ServerTLSCert: ./crypto-config/ordererOrganizations/pharma-network.com/orderers/orderer.pharma-network.com/tls/server.crt
+        ClientTLSCert: ./crypto-config/ordererOrganizations/pharma-network.com/orderers/orderer.pharma-network.com/tls/ca.crt
+    # List of orderer nodes participating in Raft consensus with their TLS certificates
+
+  # Batch is a group of transactions that the Orderer collects together before creating a block and adding it to the blockchain.
+  BatchTimeout: 2s
+
+  BatchSize:
+    MaxMessageCount: 500
+    AbsoluteMaxBytes: 10 MB
+    PreferredMaxBytes: 2 MB
+
+  MaxChannels: 0
+  # Maximum number of channels that can be created. 0 means no limit.
+
+  Organizations:
+    - *AdminOrg
+    - *ManufacturerOrg
+    - *DistributerOrg
+    - *PharmacyOrg
+
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+  Capabilities:
+    <<: *OrdererCapabilities
+
+################################################################################
+#
+#   CHANNEL
+#
+################################################################################
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+            
+    Capabilities:
+        <<: *ChannelCapabilities
+
+################################################################################
+#
+#   PROFILES
+#
+################################################################################
+Profiles:
+    PharmaSupplyChainEtcdRaft:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *AdminOrg  
+        Consortiums:
+            PharmaConsortium:
+                Organizations:
+                    - *ManufacturerOrg
+                    - *DistributerOrg
+                    - *PharmacyOrg
+
+    PharmaConsortium:
+        <<: *ChannelDefaults
+        Consortium: PharmaConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *ManufacturerOrg
+                - *DistributerOrg
+                - *PharmacyOrg
